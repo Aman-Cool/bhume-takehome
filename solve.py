@@ -47,13 +47,23 @@ MIN_CONF = 0.13     # below this confidence → flag instead of correct
 BLEND_THRESH = 0.28 # above this NCC peak → fully trust per-plot shift
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Cached transformers — constructing Transformer.from_crs per-plot is expensive
+_TF_CACHE: dict[tuple, Transformer] = {}
+
 
 def _utm_zone(lon: float) -> str:
     return f"EPSG:{32600 + int((lon + 180) // 6) + 1}"
 
 
+def _get_tf(src_epsg: str, dst_epsg: str) -> Transformer:
+    key = (src_epsg, dst_epsg)
+    if key not in _TF_CACHE:
+        _TF_CACHE[key] = Transformer.from_crs(src_epsg, dst_epsg, always_xy=True)
+    return _TF_CACHE[key]
+
+
 def _to_crs(geom, src_epsg: str, dst_epsg: str):
-    tf = Transformer.from_crs(src_epsg, dst_epsg, always_xy=True)
+    tf = _get_tf(src_epsg, dst_epsg)
     return shp_transform(lambda xs, ys, z=None: tf.transform(xs, ys), geom)
 
 

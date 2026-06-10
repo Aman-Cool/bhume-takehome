@@ -9,5 +9,8 @@ build/
 # Large raster files — download from hiring.bhume.in
 data/**/*.tif
 
+# macOS
+.DS_Store
+
 # scratch outputs
 patch_example.png
